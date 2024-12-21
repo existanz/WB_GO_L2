@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"os"
+
+	"github.com/beevik/ntp"
+)
+
 /*
 === Базовая задача ===
 
@@ -13,5 +20,14 @@ package main
 */
 
 func main() {
+	printTime("time.google.com")
+}
 
+func printTime(adress string) {
+	time, err := ntp.Time(adress)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Println(time)
 }
