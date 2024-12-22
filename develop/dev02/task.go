@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"unicode"
+)
+
 /*
 === Задача на распаковку ===
 
@@ -18,6 +25,40 @@ package main
 Функция должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+func DecodeString(s string) (string, error) {
+	if s == "" {
+		return "", nil
+	}
+	if unicode.IsDigit(rune(s[0])) {
+		return "", fmt.Errorf("incorrect string")
+	}
 
+	var prev rune
+	var escaped bool
+	var b strings.Builder
+	for _, r := range s {
+		if escaped {
+			prev = r
+			escaped = !escaped
+			continue
+		}
+		if n, err := strconv.Atoi(string(r)); err == nil {
+			if prev == rune(0) {
+				return "", fmt.Errorf("incorrect string")
+			}
+			ss := strings.Repeat(string(prev), n)
+			b.WriteString(ss)
+			prev = rune(0)
+			continue
+		}
+		if prev != rune(0) {
+			b.WriteRune(prev)
+		}
+		escaped = (r == '\\' && prev != '\\')
+		prev = r
+	}
+	if prev != rune(0) {
+		b.WriteRune(prev)
+	}
+	return b.String(), nil
 }
