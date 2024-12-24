@@ -1,5 +1,13 @@
 package main
 
+import (
+	"dev03/internal/config"
+	"dev03/internal/files"
+	"dev03/internal/sort"
+	"fmt"
+	"os"
+)
+
 /*
 === Утилита sort ===
 
@@ -26,5 +34,32 @@ package main
 */
 
 func main() {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
+	lines, err := files.ReadLines(cfg.Filename)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if cfg.OnlyCheck {
+		if sort.IsSorted(lines, cfg) {
+			fmt.Printf("File %s is sorted\n", cfg.Filename)
+		} else {
+			fmt.Printf("File %s is not sorted\n", cfg.Filename)
+		}
+	}
+
+	if !sort.IsSorted(lines, cfg) {
+		sort.Sort(lines, cfg)
+		err = files.WriteLines(cfg.Filename+"_sorted", lines)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 }
