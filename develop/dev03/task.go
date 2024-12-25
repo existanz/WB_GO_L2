@@ -55,6 +55,14 @@ func main() {
 	}
 
 	if !sort.IsSorted(lines, cfg) {
+		if cfg.IgnoreBlank {
+			lines = sort.TrimSpaces(lines)
+		}
+
+		if cfg.Unique {
+			lines = sort.Unique(lines)
+		}
+
 		sort.Sort(lines, cfg)
 		err = files.WriteLines(cfg.Filename+"_sorted", lines)
 		if err != nil {
