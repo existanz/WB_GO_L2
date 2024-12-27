@@ -1,5 +1,13 @@
 package main
 
+import (
+	"dev05/internal/config"
+	"dev05/internal/files"
+	"dev05/internal/grep"
+	"fmt"
+	"os"
+)
+
 /*
 === Утилита grep ===
 
@@ -19,5 +27,27 @@ package main
 */
 
 func main() {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	lines, err := files.ReadLines(cfg.Filename)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if cfg.Count {
+		fmt.Println(grep.CountGrep(cfg, lines))
+		return
+	}
+
+	out := grep.Grep(cfg, lines)
+
+	for _, v := range out {
+		fmt.Fprintln(os.Stdout, v)
+	}
 
 }
