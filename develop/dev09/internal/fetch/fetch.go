@@ -3,7 +3,6 @@ package fetch
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -24,12 +23,11 @@ func FetchURL(url string) (*http.Response, error) {
 
 // ExtractLinks извлекает ссылки из HTML-кода.
 func ExtractLinks(page string) (<-chan string, error) {
-	baseUrl, err := url.Parse(page)
+	resp, err := http.Get(page)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing URL: %w", err)
+		return nil, fmt.Errorf("error fetching URL: %w", err)
 	}
 
-	resp, err := http.Get(page)
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing HTML: %w", err)
@@ -45,17 +43,7 @@ func ExtractLinks(page string) (<-chan string, error) {
 			if n.Type == html.ElementNode && (n.Data == "a" || n.Data == "link") {
 				for _, a := range n.Attr {
 					if a.Key == "href" {
-						parsedUrl, err := url.Parse(a.Val)
-						if err != nil {
-							continue
-						}
-						if parsedUrl.Scheme == "" {
-							parsedUrl.Scheme = baseUrl.Scheme
-						}
-						if parsedUrl.Host == "" {
-							parsedUrl.Host = baseUrl.Host
-						}
-						linksChan <- parsedUrl.String()
+						linksChan <- a.Val
 						break
 					}
 				}
@@ -72,4 +60,8 @@ func ExtractLinks(page string) (<-chan string, error) {
 
 func IsValidURL(url string) bool {
 	return strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")
+}
+
+func SanitizeURL(url string) string {
+	return strings.ReplaceAll(url, "/", "_")
 }

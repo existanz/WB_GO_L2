@@ -5,17 +5,26 @@ import (
 	"dev09/internal/fetch"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
 )
 
-type Downloader struct{}
+type Downloader struct {
+	baseURL *url.URL
+}
 
-func NewDownloader() *Downloader {
-	return &Downloader{}
+func NewDownloader(baseURL string) (*Downloader, error) {
+	parsedURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Downloader{parsedURL}, nil
 }
 
 func (d *Downloader) Download(url, path string) error {
@@ -64,20 +73,47 @@ func (v visited) isVisited(url string) bool {
 	return false
 }
 
-func (d *Downloader) mirror(url, prefix string, v visited) error {
-	fmt.Println("Mirroring:", url)
+func (d *Downloader) mirror(urlStr, prefix string, v visited) error {
+	fmt.Println("Mirroring:", urlStr)
 	if v.lvl < 0 {
 		return nil
 	}
 
-	resp, err := fetch.FetchURL(url)
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return err
+	}
+
+	if parsedURL.Scheme == "" {
+		parsedURL.Scheme = d.baseURL.Scheme
+	}
+
+	if parsedURL.Host == "" {
+		parsedURL.Host = d.baseURL.Host
+	}
+
+	if parsedURL.Host != d.baseURL.Host {
+		return nil
+	}
+
+	resp, err := fetch.FetchURL(parsedURL.String())
 	if err != nil {
 		return fmt.Errorf("failed to fetch URL: %w", err)
 	}
 	defer resp.Body.Close()
 
-	filename := filepath.Join(prefix, filepath.Base(url))
-	file, err := os.Create(filename)
+	localPath := path.Join("mirror", parsedURL.Host, parsedURL.Path)
+	if strings.HasSuffix(parsedURL.Path, "/") || parsedURL.Path == "" {
+		localPath = path.Join(localPath, "index.html")
+	}
+
+	err = os.MkdirAll(path.Dir(localPath), 0755)
+	if err != nil {
+		return err
+	}
+
+	// Создаем локальный файл
+	file, err := os.Create(localPath)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
@@ -91,7 +127,7 @@ func (d *Downloader) mirror(url, prefix string, v visited) error {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	links, err := fetch.ExtractLinks(url)
+	links, err := fetch.ExtractLinks(urlStr)
 	if err != nil {
 		return fmt.Errorf("failed to extract links: %w", err)
 	}
@@ -105,7 +141,7 @@ func (d *Downloader) mirror(url, prefix string, v visited) error {
 		}
 
 		eg.Go(func() error {
-			err := d.mirror(link, filepath.Join(prefix, filepath.Dir(url)), v)
+			err := d.mirror(link, filepath.Join(prefix, filepath.Dir(localPath)), v)
 			fmt.Println("\033[1m\033[31m", err, "\033[0m")
 			return err
 		})

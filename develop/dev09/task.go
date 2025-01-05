@@ -23,7 +23,10 @@ func main() {
 	}
 
 	fmt.Println(*mirror)
-	downloader := download.NewDownloader() // Создаем экземпляр загрузчика
+	downloader, err := download.NewDownloader(startURL) // Создаем экземпляр загрузчика
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if *mirror {
 		err := downloader.Mirror(startURL)
