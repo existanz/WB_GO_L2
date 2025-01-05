@@ -1,7 +1,6 @@
 package download
 
 import (
-	"bytes"
 	"dev09/internal/fetch"
 	"fmt"
 	"io"
@@ -28,7 +27,6 @@ func NewDownloader(baseURL string) (*Downloader, error) {
 }
 
 func (d *Downloader) Download(url, path string) error {
-	// TODO: create file with correct name
 	resp, err := fetch.FetchURL(url)
 	if err != nil {
 		return fmt.Errorf("failed to fetch URL: %w", err)
@@ -53,7 +51,7 @@ func (d *Downloader) Download(url, path string) error {
 func (d *Downloader) Mirror(url string) error {
 	links := make(map[string]struct{})
 	fmt.Println("Mirroring:", url)
-	return d.mirror(url, "", visited{links: links, mu: &sync.Mutex{}, lvl: 2})
+	return d.mirror(url, visited{links: links, mu: &sync.Mutex{}, lvl: 2})
 }
 
 type visited struct {
@@ -73,7 +71,7 @@ func (v visited) isVisited(url string) bool {
 	return false
 }
 
-func (d *Downloader) mirror(urlStr, prefix string, v visited) error {
+func (d *Downloader) mirror(urlStr string, v visited) error {
 	fmt.Println("Mirroring:", urlStr)
 	if v.lvl < 0 {
 		return nil
@@ -112,17 +110,14 @@ func (d *Downloader) mirror(urlStr, prefix string, v visited) error {
 		return err
 	}
 
-	// Создаем локальный файл
 	file, err := os.Create(localPath)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer file.Close()
 
-	buf := &bytes.Buffer{}
-	io.TeeReader(resp.Body, buf)
+	_, err = io.Copy(file, resp.Body)
 
-	_, err = io.Copy(file, buf)
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
@@ -135,13 +130,12 @@ func (d *Downloader) mirror(urlStr, prefix string, v visited) error {
 
 	var eg errgroup.Group
 	for link := range links {
-		fmt.Println(link)
 		if !fetch.IsValidURL(link) && v.isVisited(link) {
 			continue
 		}
 
 		eg.Go(func() error {
-			err := d.mirror(link, filepath.Join(prefix, filepath.Dir(localPath)), v)
+			err := d.mirror(link, v)
 			fmt.Println("\033[1m\033[31m", err, "\033[0m")
 			return err
 		})
