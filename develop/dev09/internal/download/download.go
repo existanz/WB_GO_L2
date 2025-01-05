@@ -18,14 +18,15 @@ func NewDownloader() *Downloader {
 	return &Downloader{}
 }
 
-func (d *Downloader) Download(url string) error {
+func (d *Downloader) Download(url, path string) error {
+	// TODO: create file with correct name
 	resp, err := fetch.FetchURL(url)
 	if err != nil {
 		return fmt.Errorf("failed to fetch URL: %w", err)
 	}
 	defer resp.Body.Close()
 
-	filename := filepath.Base(url)
+	filename := filepath.Join(path, filepath.Base(url))
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
@@ -64,6 +65,7 @@ func (v visited) isVisited(url string) bool {
 }
 
 func (d *Downloader) mirror(url, prefix string, v visited) error {
+	fmt.Println("Mirroring:", url)
 	if v.lvl < 0 {
 		return nil
 	}
@@ -89,7 +91,7 @@ func (d *Downloader) mirror(url, prefix string, v visited) error {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	links, err := fetch.ExtractLinks(resp.Body)
+	links, err := fetch.ExtractLinks(url)
 	if err != nil {
 		return fmt.Errorf("failed to extract links: %w", err)
 	}
@@ -103,7 +105,9 @@ func (d *Downloader) mirror(url, prefix string, v visited) error {
 		}
 
 		eg.Go(func() error {
-			return d.mirror(link, filepath.Join(prefix, filepath.Dir(url)), v)
+			err := d.mirror(link, filepath.Join(prefix, filepath.Dir(url)), v)
+			fmt.Println("\033[1m\033[31m", err, "\033[0m")
+			return err
 		})
 	}
 

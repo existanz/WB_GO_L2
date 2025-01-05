@@ -2,8 +2,8 @@ package fetch
 
 import (
 	"fmt"
-	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -23,8 +23,14 @@ func FetchURL(url string) (*http.Response, error) {
 }
 
 // ExtractLinks извлекает ссылки из HTML-кода.
-func ExtractLinks(body io.Reader) (<-chan string, error) {
-	doc, err := html.Parse(body)
+func ExtractLinks(page string) (<-chan string, error) {
+	baseUrl, err := url.Parse(page)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing URL: %w", err)
+	}
+
+	resp, err := http.Get(page)
+	doc, err := html.Parse(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing HTML: %w", err)
 	}
@@ -36,10 +42,20 @@ func ExtractLinks(body io.Reader) (<-chan string, error) {
 
 		var f func(*html.Node)
 		f = func(n *html.Node) {
-			if n.Type == html.ElementNode && n.Data == "a" {
+			if n.Type == html.ElementNode && (n.Data == "a" || n.Data == "link") {
 				for _, a := range n.Attr {
 					if a.Key == "href" {
-						linksChan <- a.Val
+						parsedUrl, err := url.Parse(a.Val)
+						if err != nil {
+							continue
+						}
+						if parsedUrl.Scheme == "" {
+							parsedUrl.Scheme = baseUrl.Scheme
+						}
+						if parsedUrl.Host == "" {
+							parsedUrl.Host = baseUrl.Host
+						}
+						linksChan <- parsedUrl.String()
 						break
 					}
 				}

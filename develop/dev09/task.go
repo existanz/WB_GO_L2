@@ -31,7 +31,7 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		err := downloader.Download(startURL)
+		err := downloader.Download(startURL, "")
 		if err != nil {
 			log.Fatal(err)
 		}
