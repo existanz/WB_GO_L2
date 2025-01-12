@@ -13,3 +13,7 @@ func WriteError(w http.ResponseWriter, status int, message string) {
 func WriteResult(w http.ResponseWriter, message string) {
 	json.NewEncoder(w).Encode(map[string]string{"result": message})
 }
+
+func BindJSON(r *http.Request, v any) error {
+	return json.NewDecoder(r.Body).Decode(v)
+}

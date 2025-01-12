@@ -5,8 +5,8 @@ import (
 	"dev11/internal/mw"
 	"dev11/internal/service"
 	"dev11/pkg/util"
+	"fmt"
 	"net/http"
-	"time"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -31,18 +31,18 @@ func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var event entities.Event
-	if err := r.ParseForm(); err != nil {
-		util.WriteError(w, http.StatusBadRequest, "Invalid form data")
+	event, err := entities.ParseEvent(r)
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	event.UserID, _ = util.ParseInt(r.FormValue("user_id"))
-	event.Title = r.FormValue("title")
-	event.Date, _ = time.Parse("2006-01-02", r.FormValue("date"))
-	event.Duration, _ = time.ParseDuration(r.FormValue("duration"))
-	event.CreatedAt = time.Now()
-	event.UpdatedAt = time.Now()
+	if err := entities.ValidateEvent(event); err != nil {
+		util.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	fmt.Println("Create event: ", event)
 
 	if err := service.CreateEvent(event); err != nil {
 		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
