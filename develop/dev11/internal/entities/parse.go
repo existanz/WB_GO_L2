@@ -26,6 +26,7 @@ func ParseEvent(r *http.Request) (Event, error) {
 	if err != nil {
 		return event, err
 	}
+	event.Date = event.Date.Add(7 * time.Hour)
 	event.Duration, err = time.ParseDuration(r.FormValue("duration"))
 	if err != nil {
 		return event, err

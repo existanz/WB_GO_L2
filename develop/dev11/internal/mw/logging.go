@@ -12,7 +12,6 @@ func Logging(next http.Handler) http.Handler {
 		start := time.Now()
 
 		rec := statusRecorder{ResponseWriter: w, statusCode: ""}
-		rec.WriteHeader(http.StatusOK)
 
 		next.ServeHTTP(&rec, r)
 

@@ -28,7 +28,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -54,12 +56,15 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
-
-	server := server.NewServer()
+	port, _ := strconv.Atoi(os.Getenv("APP_PORT"))
+	host := os.Getenv("APP_HOST")
+	server := server.NewServer(host, port)
 
 	done := make(chan bool, 1)
 
 	go gracefulShutdown(server, done)
+
+	log.Printf("Server started at %s:%d", host, port)
 
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
