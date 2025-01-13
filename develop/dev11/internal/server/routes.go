@@ -1,11 +1,12 @@
 package server
 
 import (
+	"net/http"
+	"strconv"
+
 	"dev11/internal/entities"
 	"dev11/internal/mw"
 	"dev11/pkg/util"
-	"net/http"
-	"strconv"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {

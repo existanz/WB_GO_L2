@@ -24,7 +24,6 @@ package main
 
 import (
 	"context"
-	"dev11/internal/server"
 	"fmt"
 	"log"
 	"net/http"
@@ -33,6 +32,10 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"dev11/internal/server"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {

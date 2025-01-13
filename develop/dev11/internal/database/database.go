@@ -1,13 +1,11 @@
 package database
 
 import (
-	"dev11/internal/entities"
 	"log"
 	"sync"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/joho/godotenv/autoload"
+	"dev11/internal/entities"
 )
 
 type Service interface {
