@@ -42,7 +42,7 @@ func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.db.AddEvent(event); err != nil {
-		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
+		util.WriteError(w, http.StatusServiceUnavailable, entities.ErrServiceUnavailable.Error())
 		return
 	}
 
@@ -71,7 +71,7 @@ func (s *Server) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 			util.WriteError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
+		util.WriteError(w, http.StatusServiceUnavailable, entities.ErrServiceUnavailable.Error())
 		return
 	}
 
@@ -101,7 +101,7 @@ func (s *Server) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 			util.WriteError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
+		util.WriteError(w, http.StatusServiceUnavailable, entities.ErrServiceUnavailable.Error())
 		return
 	}
 
@@ -128,7 +128,7 @@ func (s *Server) EventsForDay(w http.ResponseWriter, r *http.Request) {
 			util.WriteError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
+		util.WriteError(w, http.StatusServiceUnavailable, entities.ErrServiceUnavailable.Error())
 		return
 	}
 
@@ -155,7 +155,7 @@ func (s *Server) EventsForWeek(w http.ResponseWriter, r *http.Request) {
 			util.WriteError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
+		util.WriteError(w, http.StatusServiceUnavailable, entities.ErrServiceUnavailable.Error())
 		return
 	}
 
@@ -182,7 +182,7 @@ func (s *Server) EventsForMonth(w http.ResponseWriter, r *http.Request) {
 			util.WriteError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
+		util.WriteError(w, http.StatusServiceUnavailable, entities.ErrServiceUnavailable.Error())
 		return
 	}
 
