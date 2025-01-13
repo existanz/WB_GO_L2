@@ -4,7 +4,6 @@ import (
 	"dev11/internal/entities"
 	"dev11/internal/mw"
 	"dev11/pkg/util"
-	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -42,10 +41,8 @@ func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Create event: ", event)
-
 	if err := s.db.AddEvent(event); err != nil {
-		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
 		return
 	}
 
@@ -69,10 +66,12 @@ func (s *Server) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Update event: ", event)
-
 	if err := s.db.UpdateEvent(event); err != nil {
-		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		if err == entities.ErrUserNotFound || err == entities.ErrEventNotFound {
+			util.WriteError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
 		return
 	}
 
@@ -97,10 +96,12 @@ func (s *Server) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Delete event: ", eventID, userID)
-
 	if err := s.db.DeleteEvent(userID, eventID); err != nil {
-		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		if err == entities.ErrUserNotFound || err == entities.ErrEventNotFound {
+			util.WriteError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
 		return
 	}
 
@@ -123,7 +124,11 @@ func (s *Server) EventsForDay(w http.ResponseWriter, r *http.Request) {
 
 	events, err := s.db.GetEventsForPeriod(userID, date, 1)
 	if err != nil {
-		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		if err == entities.ErrUserNotFound || err == entities.ErrEventNotFound {
+			util.WriteError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
 		return
 	}
 
@@ -146,7 +151,11 @@ func (s *Server) EventsForWeek(w http.ResponseWriter, r *http.Request) {
 
 	events, err := s.db.GetEventsForPeriod(userID, date, 7)
 	if err != nil {
-		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		if err == entities.ErrUserNotFound || err == entities.ErrEventNotFound {
+			util.WriteError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
 		return
 	}
 
@@ -169,7 +178,11 @@ func (s *Server) EventsForMonth(w http.ResponseWriter, r *http.Request) {
 
 	events, err := s.db.GetEventsForPeriod(userID, date, 30)
 	if err != nil {
-		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		if err == entities.ErrUserNotFound || err == entities.ErrEventNotFound {
+			util.WriteError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		util.WriteError(w, http.StatusInternalServerError, entities.ErrISE.Error())
 		return
 	}
 

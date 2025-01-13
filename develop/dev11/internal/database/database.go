@@ -2,7 +2,6 @@ package database
 
 import (
 	"dev11/internal/entities"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -71,7 +70,7 @@ func (s *service) UpdateEvent(event entities.Event) error {
 	userID := event.UserID
 	events, ok := s.db[userID]
 	if !ok {
-		return fmt.Errorf("user with id %d does not exist", userID)
+		return entities.ErrUserNotFound
 	}
 
 	for i, e := range events {
@@ -81,7 +80,7 @@ func (s *service) UpdateEvent(event entities.Event) error {
 		}
 	}
 
-	return fmt.Errorf("event with id %d does not exist", event.ID)
+	return entities.ErrEventNotFound
 }
 
 func (s *service) DeleteEvent(userID, eventID int) error {
@@ -90,7 +89,7 @@ func (s *service) DeleteEvent(userID, eventID int) error {
 
 	events, ok := s.db[userID]
 	if !ok {
-		return fmt.Errorf("user with id %d does not exist", userID)
+		return entities.ErrUserNotFound
 	}
 
 	for i, e := range events {
@@ -100,7 +99,7 @@ func (s *service) DeleteEvent(userID, eventID int) error {
 		}
 	}
 
-	return fmt.Errorf("event with id %d does not exist", eventID)
+	return entities.ErrEventNotFound
 }
 
 func (s *service) GetEventsForPeriod(userID int, date string, period int) ([]entities.Event, error) {
@@ -109,7 +108,7 @@ func (s *service) GetEventsForPeriod(userID int, date string, period int) ([]ent
 
 	events, ok := s.db[userID]
 	if !ok {
-		return nil, fmt.Errorf("user with id %d does not exist", userID)
+		return nil, entities.ErrUserNotFound
 	}
 
 	t, err := time.Parse("2006-01-02", date)
