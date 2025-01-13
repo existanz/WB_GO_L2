@@ -14,6 +14,15 @@ func WriteResult(w http.ResponseWriter, message string) {
 	json.NewEncoder(w).Encode(map[string]string{"result": message})
 }
 
+func WriteJSON(w http.ResponseWriter, v any) {
+	message, err := json.Marshal(v)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	WriteResult(w, string(message))
+}
+
 func BindJSON(r *http.Request, v any) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }

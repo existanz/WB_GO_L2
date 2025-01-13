@@ -3,10 +3,10 @@ package server
 import (
 	"dev11/internal/entities"
 	"dev11/internal/mw"
-	"dev11/internal/service"
 	"dev11/pkg/util"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -44,7 +44,7 @@ func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Create event: ", event)
 
-	if err := service.CreateEvent(event); err != nil {
+	if err := s.db.AddEvent(event); err != nil {
 		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
@@ -53,21 +53,125 @@ func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) UpdateEvent(w http.ResponseWriter, r *http.Request) {
-	// Similar implementation as CreateEvent
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	event, err := entities.ParseEvent(r)
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := entities.ValidateEvent(event); err != nil {
+		util.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	fmt.Println("Update event: ", event)
+
+	if err := s.db.UpdateEvent(event); err != nil {
+		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	util.WriteResult(w, "Event updated successfully")
 }
 
 func (s *Server) DeleteEvent(w http.ResponseWriter, r *http.Request) {
-	// Implementation
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	eventID, err := strconv.Atoi(r.FormValue("event_id"))
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, "event_id should be a valid positive integer")
+		return
+	}
+
+	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, "user_id should be a valid positive integer")
+		return
+	}
+
+	fmt.Println("Delete event: ", eventID, userID)
+
+	if err := s.db.DeleteEvent(userID, eventID); err != nil {
+		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	util.WriteResult(w, "Event deleted successfully")
 }
 
 func (s *Server) EventsForDay(w http.ResponseWriter, r *http.Request) {
-	// Implementation
+	date := r.URL.Query().Get("date")
+
+	if date == "" {
+		util.WriteError(w, http.StatusBadRequest, "date should be provided")
+		return
+	}
+
+	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, "user_id should be a valid positive integer")
+		return
+	}
+
+	events, err := s.db.GetEventsForPeriod(userID, date, 1)
+	if err != nil {
+		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	util.WriteJSON(w, events)
 }
 
 func (s *Server) EventsForWeek(w http.ResponseWriter, r *http.Request) {
-	// Implementation
+	date := r.URL.Query().Get("date")
+
+	if date == "" {
+		util.WriteError(w, http.StatusBadRequest, "date should be provided")
+		return
+	}
+
+	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, "user_id should be a valid positive integer")
+		return
+	}
+
+	events, err := s.db.GetEventsForPeriod(userID, date, 7)
+	if err != nil {
+		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	util.WriteJSON(w, events)
 }
 
 func (s *Server) EventsForMonth(w http.ResponseWriter, r *http.Request) {
-	// Implementation
+	date := r.URL.Query().Get("date")
+
+	if date == "" {
+		util.WriteError(w, http.StatusBadRequest, "date should be provided")
+		return
+	}
+
+	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	if err != nil {
+		util.WriteError(w, http.StatusBadRequest, "user_id should be a valid positive integer")
+		return
+	}
+
+	events, err := s.db.GetEventsForPeriod(userID, date, 30)
+	if err != nil {
+		util.WriteError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	util.WriteJSON(w, events)
 }
