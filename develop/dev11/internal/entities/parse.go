@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -71,9 +70,7 @@ func parseFormIntoStruct(form url.Values, obj interface{}) error {
 			if err != nil {
 				return err
 			}
-			fmt.Println("-->", valueInt)
 			value.SetInt(valueInt)
-			fmt.Println("><")
 		case reflect.String:
 			valueStr := form.Get(field.Tag.Get(formTag))
 			if valueStr == "" {
